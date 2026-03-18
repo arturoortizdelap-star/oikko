@@ -31,12 +31,26 @@ export default async function Inventario() {
               )}
               <div className="font-semibold">{p.nombre}</div>
               <div className="text-sm text-gray-500">{p.color} {p.categoria && `· ${p.categoria}`}</div>
-              <div className="flex justify-between mt-2">
+              <div className="flex justify-between items-center mt-2">
                 <span className="text-lg font-bold">${p.precio}</span>
                 <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${p.piezas <= 3 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
                   {p.piezas} pzas
                 </span>
               </div>
+              {p.tallas && (() => {
+                try {
+                  const t = JSON.parse(p.tallas)
+                  return (
+                    <div className="flex gap-1 flex-wrap mt-2">
+                      {Object.entries(t).filter(([,v]) => (v as number) > 0).map(([talla, cant]) => (
+                        <span key={talla} className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                          {talla}: {cant as number}
+                        </span>
+                      ))}
+                    </div>
+                  )
+                } catch { return null }
+              })()}
             </Link>
           ))}
         </div>
