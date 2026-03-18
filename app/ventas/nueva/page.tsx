@@ -10,6 +10,8 @@ export default function NuevaVenta() {
   const [items, setItems] = useState<any[]>([])
   const [scanning, setScanning] = useState(false)
   const [guardando, setGuardando] = useState(false)
+  const [descripcion, setDescripcion] = useState('')
+  const [modoTexto, setModoTexto] = useState(false)
 
   const scanearProducto = async (b64: string) => {
     const modelo = localStorage.getItem('ai_modelo')
@@ -55,6 +57,31 @@ export default function NuevaVenta() {
     e.target.value = ''
   }
 
+  const buscarPorDescripcion = async () => {
+    if (!descripcion.trim()) return
+    const modelo = localStorage.getItem('ai_modelo')
+    const apiKey = localStorage.getItem('ai_apikey')
+    if (!modelo || !apiKey) { alert('Configura tu modelo de IA en ⚙️ Config'); return }
+    setScanning(true)
+    try {
+      const res = await fetch('/api/scanner-buscar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: null, filtro: descripcion, modelo, apiKey })
+      })
+      const data = await res.json()
+      if (data.resultados?.length > 0) {
+        const p = data.resultados[0]
+        if (!items.find(i => i.productoId === p.id)) {
+          setItems(prev => [...prev, { productoId: p.id, nombre: p.nombre, precio: p.precio, cantidad: 1, talla: '', imagen: p.imagen }])
+          setDescripcion('')
+          setModoTexto(false)
+        } else { alert(`${p.nombre} ya está en la venta`) }
+      } else { alert('No encontré esa prenda') }
+    } catch { alert('Error al buscar') }
+    setScanning(false)
+  }
+
   const quitarItem = (idx: number) => setItems(items.filter((_, i) => i !== idx))
   const cambiarCantidad = (idx: number, v: number) => {
     setItems(items.map((item, i) => i === idx ? { ...item, cantidad: Math.max(1, v) } : item))
@@ -94,13 +121,34 @@ export default function NuevaVenta() {
         </div>
       </div>
 
-      {/* Escanear prenda */}
-      <button onClick={() => fileRef.current?.click()}
-        disabled={scanning}
-        className="w-full py-4 rounded-2xl text-white font-semibold text-base mb-4 flex items-center justify-center gap-2"
-        style={{ background: 'linear-gradient(135deg, #00E5D1, #00B8A9)', boxShadow: '0 0 20px rgba(0,229,209,0.3)' }}>
-        {scanning ? <><span className="animate-pulse">🔍</span> Buscando...</> : <><span>📷</span> Escanear prenda</>}
-      </button>
+      {/* Agregar prenda */}
+      {!modoTexto ? (
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          <button onClick={() => fileRef.current?.click()} disabled={scanning}
+            className="py-3 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2"
+            style={{ background: 'linear-gradient(135deg,#00E5D1,#00B8A9)', boxShadow: '0 0 15px rgba(0,229,209,0.3)' }}>
+            {scanning ? <><span className="animate-pulse">🔍</span> Buscando...</> : <><span>📷</span> Foto</>}
+          </button>
+          <button onClick={() => setModoTexto(true)} disabled={scanning}
+            className="py-3 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2"
+            style={{ background: '#f5f5f5', color: '#555', border: '2px solid #e5e5e5' }}>
+            <span>✏️</span> Descripción
+          </button>
+        </div>
+      ) : (
+        <div className="flex gap-2 mb-4">
+          <input value={descripcion} onChange={e => setDescripcion(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && buscarPorDescripcion()}
+            placeholder='Ej: vestido rojo floreado'
+            className="flex-1 border rounded-xl px-3 py-2 text-sm focus:outline-none" />
+          <button onClick={buscarPorDescripcion} disabled={scanning}
+            className="px-3 py-2 rounded-xl text-white text-sm font-semibold"
+            style={{ background: 'linear-gradient(135deg,#00E5D1,#00B8A9)' }}>
+            {scanning ? '🔍' : 'Buscar'}
+          </button>
+          <button onClick={() => setModoTexto(false)} className="px-3 py-2 rounded-xl bg-gray-100 text-gray-500 text-sm">✕</button>
+        </div>
+      )}
       <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onFoto} />
 
       {/* Items */}
