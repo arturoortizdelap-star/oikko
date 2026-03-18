@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
           'content-type': 'application/json'
         },
         body: JSON.stringify({
-          model: model.includes('claude') ? model : `claude-${model}`,
+          model: model,
           max_tokens: 300,
           messages: [{ role: 'user', content: [
             { type: 'image', source: { type: 'base64', media_type: mime, data: b64 } },

@@ -78,7 +78,7 @@ Si no hay coincidencias: {"matches":[]}`
           'content-type': 'application/json'
         },
         body: JSON.stringify({
-          model: model.includes('claude') ? model : `claude-${model}`,
+          model: model,
           max_tokens: 500,
           messages: [{ role: 'user', content }]
         })
