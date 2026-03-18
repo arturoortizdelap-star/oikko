@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
+import DeleteVenta from './DeleteVenta'
 
 export default async function Ventas() {
   const ventas = await prisma.venta.findMany({
@@ -41,7 +42,10 @@ export default async function Ventas() {
                   {v.telefono && <p className="text-xs text-gray-400">{v.telefono}</p>}
                   <p className="text-xs text-gray-400">{new Date(v.fecha).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                 </div>
-                <span className="text-xl font-bold" style={{ color: '#C8420A' }}>${v.total.toLocaleString()}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl font-bold" style={{ color: '#C8420A' }}>${v.total.toLocaleString()}</span>
+                  <DeleteVenta id={v.id} cliente={v.cliente} />
+                </div>
               </div>
               <div className="flex gap-2 flex-wrap mt-2">
                 {v.items.map((item, i) => (
