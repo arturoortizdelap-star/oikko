@@ -13,8 +13,8 @@ export async function POST(req: NextRequest) {
   await prisma.usuario.create({ data: { email, password: hash } })
 
   const store = await cookies()
-  store.set('oikko-auth', 'true', { httpOnly: true, secure: true, sameSite: 'strict', maxAge: 60*60*24*30, path: '/' })
-  store.set('oikko-email', email, { httpOnly: true, secure: true, sameSite: 'strict', maxAge: 60*60*24*30, path: '/' })
+  store.set('oikko-auth', 'true', { httpOnly: true, secure: true, sameSite: 'strict', maxAge: 60*60*24*365*10, path: '/' })
+  store.set('oikko-email', email, { httpOnly: true, secure: true, sameSite: 'strict', maxAge: 60*60*24*365*10, path: '/' })
 
   return NextResponse.json({ ok: true })
 }

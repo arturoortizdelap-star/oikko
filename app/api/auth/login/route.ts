@@ -14,14 +14,14 @@ export async function POST(req: NextRequest) {
     httpOnly: true,
     secure: true,
     sameSite: 'strict',
-    maxAge: 60 * 60 * 24 * 30, // 30 días
+    maxAge: 60 * 60 * 24 * 365 * 10, // 10 años (sin expiración práctica)
     path: '/'
   })
   store.set('oikko-email', email, {
     httpOnly: true,
     secure: true,
     sameSite: 'strict',
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: 60 * 60 * 24 * 365 * 10,
     path: '/'
   })
   return NextResponse.json({ ok: true })
