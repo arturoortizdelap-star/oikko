@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Cormorant_Garamond } from 'next/font/google'
 import './globals.css'
 import Link from 'next/link'
+import LogoutButton from '@/components/LogoutButton'
 
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
@@ -63,6 +64,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 {n.label}
               </Link>
             ))}
+            <div className="mt-auto pt-4">
+              <LogoutButton />
+            </div>
           </aside>
           <main className="ml-56 flex-1 p-8">{children}</main>
         </div>
