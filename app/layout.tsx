@@ -30,7 +30,7 @@ const nav = [
   { href: '/inventario', label: '📦 Inventario' },
   { href: '/scanner', label: '📷 Scanner' },
   { href: '/ventas', label: '💳 Ventas' },
-  { href: '/pedidos', label: '🚢 En camino' },
+  { href: '/composturas', label: '✂️ Composturas' },
   { href: '/finanzas', label: '💰 Finanzas' },
   { href: '/configuracion', label: '⚙️ Config' },
 ]

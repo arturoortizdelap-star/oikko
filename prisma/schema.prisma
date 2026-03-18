@@ -35,6 +35,16 @@ model Pedido {
   items          PedidoItem[]
 }
 
+model Compostura {
+  id            Int      @id @default(autoincrement())
+  cliente       String
+  prenda        String
+  descripcion   String
+  entrega       DateTime?
+  estatus       String   @default("pendiente") // pendiente | entregada
+  fecha         DateTime @default(now())
+}
+
 model PedidoItem {
   id         Int      @id @default(autoincrement())
   pedido     Pedido   @relation(fields: [pedidoId], references: [id])
@@ -46,11 +56,12 @@ model PedidoItem {
 }
 
 model Movimiento {
-  id       Int      @id @default(autoincrement())
-  tipo     String
-  concepto String
-  monto    Float
-  fecha    DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  tipo       String   // ingreso | gasto
+  categoria  String   @default("otros") // ventas | compras_oficina | nomina | otros
+  concepto   String
+  monto      Float
+  fecha      DateTime @default(now())
 }
 
 model Configuracion {
