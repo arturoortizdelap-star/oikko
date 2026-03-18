@@ -48,8 +48,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <nav className="oikko-bottomnav glass md:hidden" style={{ background: 'rgba(0,180,160,0.92)' }}>
           {nav.map(n => (
             <Link key={n.href} href={n.href} className="oikko-bottomnav-item">
-              <span className="text-xl">{n.label.split(' ')[0]}</span>
-              <span className="text-[10px]">{n.label.split(' ').slice(1).join(' ')}</span>
+              <span className="text-2xl">{n.label.split(' ')[0]}</span>
+              <span className="text-[11px] font-bold">{n.label.split(' ').slice(1).join(' ')}</span>
             </Link>
           ))}
         </nav>
