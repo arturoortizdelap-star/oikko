@@ -12,6 +12,16 @@ const cormorant = Cormorant_Garamond({
 export const metadata: Metadata = {
   title: 'OIKKO — Control',
   description: 'Sistema de control para boutique OIKKO',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'OIKKO',
+  },
+  icons: {
+    apple: '/apple-touch-icon.png',
+    icon: '/icon-192.png',
+  }
 }
 
 const nav = [
