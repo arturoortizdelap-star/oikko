@@ -1,10 +1,10 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 const TALLAS_DEFAULT = ['XS','S','M','L','XL','XXL','Única']
 
-export default function NuevoProducto() {
+function NuevoProductoInner() {
   const router = useRouter()
   const params = useSearchParams()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -150,4 +150,8 @@ export default function NuevoProducto() {
       </button>
     </div>
   )
+}
+
+export default function NuevoProducto() {
+  return <Suspense fallback={<div className="text-center mt-20 text-gray-400">Cargando...</div>}><NuevoProductoInner /></Suspense>
 }
