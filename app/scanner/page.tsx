@@ -55,33 +55,40 @@ export default function Scanner() {
       <h1 className="text-2xl font-semibold mb-2">📷 Buscar prenda</h1>
       <p className="text-sm text-gray-400 mb-5">Toma foto o describe la prenda para encontrarla en inventario</p>
 
-      {/* Foto */}
-      <div
-        onClick={() => fileRef.current?.click()}
-        className="relative w-full rounded-3xl flex flex-col items-center justify-center cursor-pointer overflow-hidden mb-4"
-        style={{
-          minHeight: imagen ? 'auto' : '180px',
-          background: imagen ? 'transparent' : 'linear-gradient(135deg, #00E5D1, #00B8A9)',
-          boxShadow: '0 0 25px rgba(0,229,209,0.35)',
-          border: '2px solid rgba(0,229,209,0.5)'
-        }}>
-        {imagen ? (
+      {/* Dos botones: cámara y galería */}
+      {!imagen ? (
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <button onClick={() => {
+            const input = document.createElement('input')
+            input.type = 'file'; input.accept = 'image/*'; input.capture = 'environment'
+            input.onchange = (e: any) => onImagen({ target: { files: e.target.files } } as any)
+            input.click()
+          }}
+            className="flex flex-col items-center justify-center py-5 rounded-2xl text-white font-semibold gap-2"
+            style={{ background: 'linear-gradient(135deg,#00E5D1,#00B8A9)', boxShadow: '0 0 20px rgba(0,229,209,0.3)' }}>
+            <span className="text-4xl">📷</span>
+            <span className="text-sm">Tomar foto</span>
+          </button>
+          <button onClick={() => fileRef.current?.click()}
+            className="flex flex-col items-center justify-center py-5 rounded-2xl font-semibold gap-2"
+            style={{ background: '#f5f5f5', color: '#555', border: '2px solid #e5e5e5' }}>
+            <span className="text-4xl">🖼️</span>
+            <span className="text-sm">Subir imagen</span>
+          </button>
+        </div>
+      ) : (
+        <div className="relative w-full rounded-3xl overflow-hidden mb-4 cursor-pointer" onClick={() => { setImagen(null); setResultados([]) }}>
           <img src={imagen} className="w-full object-cover rounded-3xl" style={{ maxHeight: '220px' }} />
-        ) : (
-          <>
-            <div className="text-5xl mb-2">📷</div>
-            <p className="text-white font-semibold">Toca para tomar foto</p>
-            <p className="text-white/70 text-xs mt-1">o sube una imagen</p>
-          </>
-        )}
-        {scanning && (
-          <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center rounded-3xl">
-            <div className="text-4xl animate-pulse mb-2">🔍</div>
-            <p className="text-white font-medium text-sm">Buscando en inventario...</p>
-          </div>
-        )}
-      </div>
-      <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onImagen} />
+          {scanning && (
+            <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center rounded-3xl">
+              <div className="text-4xl animate-pulse mb-2">🔍</div>
+              <p className="text-white font-medium text-sm">Buscando en inventario...</p>
+            </div>
+          )}
+          <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full">Cambiar foto</div>
+        </div>
+      )}
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onImagen} />
 
       {/* Filtro texto */}
       <div className="flex gap-2 mb-5">
