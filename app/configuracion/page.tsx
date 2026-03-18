@@ -22,10 +22,12 @@ export default function Configuracion() {
 
   const modelos = [
     { value: 'google/gemini-1.5-flash', label: 'Gemini Flash (recomendado — casi gratis)' },
+    { value: 'google/gemini-2.0-flash', label: 'Gemini 2.0 Flash (más rápido)' },
     { value: 'google/gemini-1.5-pro', label: 'Gemini Pro' },
+    { value: 'anthropic/claude-haiku-4-5', label: 'Claude Haiku (Anthropic)' },
+    { value: 'anthropic/claude-sonnet-4-5', label: 'Claude Sonnet (Anthropic)' },
     { value: 'openai/gpt-4o-mini', label: 'GPT-4o Mini' },
     { value: 'openai/gpt-4o', label: 'GPT-4o' },
-    { value: 'anthropic/claude-haiku', label: 'Claude Haiku' },
   ]
 
   return (

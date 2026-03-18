@@ -5,16 +5,14 @@ export async function POST(req: NextRequest) {
   const { image, filtro, modelo, apiKey } = await req.json()
 
   if (!modelo || !apiKey) {
-    return NextResponse.json({ error: 'Falta modelo o API key' }, { status: 400 })
+    return NextResponse.json({ error: 'Configura modelo y API key en ⚙️ Config' }, { status: 400 })
   }
 
-  // 1. Obtener todos los productos del inventario
   const productos = await prisma.producto.findMany()
   if (productos.length === 0) {
-    return NextResponse.json({ resultados: [] })
+    return NextResponse.json({ resultados: [], debug: 'inventario vacío' })
   }
 
-  // 2. Construir catálogo para la IA
   const catalogo = productos.map(p => ({
     id: p.id,
     nombre: p.nombre,
@@ -24,33 +22,28 @@ export async function POST(req: NextRequest) {
     tallas: p.tallas,
   }))
 
-  const prompt = `Eres un asistente de búsqueda de ropa para una boutique.
+  const promptTexto = `Eres asistente de búsqueda de ropa para una boutique.
+${filtro ? `El cliente busca: "${filtro}"` : 'Analiza la imagen de la prenda.'}
 
-${image ? 'Se te proporciona una imagen de una prenda.' : ''}
-${filtro ? `El cliente busca: "${filtro}"` : ''}
+Catálogo (JSON):
+${JSON.stringify(catalogo)}
 
-Catálogo disponible (JSON):
-${JSON.stringify(catalogo, null, 2)}
-
-Analiza ${image ? 'la imagen y' : ''} la descripción del cliente.
-Devuelve los IDs de los productos que coincidan, ordenados por relevancia.
-Solo devuelve JSON con este formato exacto:
-{
-  "matches": [
-    { "id": 1, "razon": "coincide por color y tipo de prenda" },
-    { "id": 2, "razon": "similar en estampado" }
-  ]
-}
-Si no hay coincidencias devuelve: { "matches": [] }`
+Devuelve SOLO este JSON (sin texto extra):
+{"matches":[{"id":1,"razon":"razón breve"}]}
+Si no hay coincidencias: {"matches":[]}`
 
   try {
     let matches: { id: number; razon: string }[] = []
+    let debugInfo: any = {}
 
-    if (modelo.startsWith('google/')) {
+    // ── GEMINI ─────────────────────────────────────────────
+    if (modelo.startsWith('google/') || modelo.includes('gemini')) {
       const model = modelo.replace('google/', '')
-      const parts: any[] = [{ text: prompt }]
+      const parts: any[] = [{ text: promptTexto }]
       if (image) {
-        parts.unshift({ inline_data: { mime_type: 'image/jpeg', data: image.split(',')[1] } })
+        const b64 = image.includes(',') ? image.split(',')[1] : image
+        const mime = image.startsWith('data:image/png') ? 'image/png' : 'image/jpeg'
+        parts.unshift({ inline_data: { mime_type: mime, data: b64 } })
       }
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
@@ -61,39 +54,71 @@ Si no hay coincidencias devuelve: { "matches": [] }`
         }
       )
       const data = await res.json()
+      debugInfo = { status: res.status, gemini: data }
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}'
-      const parsed = JSON.parse(text.replace(/```json\n?|\n?```/g, '').trim())
+      const cleaned = text.replace(/```json\n?|\n?```/g, '').trim()
+      const parsed = JSON.parse(cleaned)
       matches = parsed.matches || []
 
-    } else if (modelo.startsWith('openai/')) {
+    // ── ANTHROPIC ──────────────────────────────────────────
+    } else if (modelo.startsWith('anthropic/') || modelo.includes('claude')) {
+      const model = modelo.replace('anthropic/', '')
+      const content: any[] = []
+      if (image) {
+        const b64 = image.includes(',') ? image.split(',')[1] : image
+        const mediaType = image.startsWith('data:image/png') ? 'image/png' : 'image/jpeg'
+        content.push({ type: 'image', source: { type: 'base64', media_type: mediaType, data: b64 } })
+      }
+      content.push({ type: 'text', text: promptTexto })
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: model.includes('claude') ? model : `claude-${model}`,
+          max_tokens: 500,
+          messages: [{ role: 'user', content }]
+        })
+      })
+      const data = await res.json()
+      debugInfo = { status: res.status, anthropic: data }
+      const text = data.content?.[0]?.text || '{}'
+      const cleaned = text.replace(/```json\n?|\n?```/g, '').trim()
+      const parsed = JSON.parse(cleaned)
+      matches = parsed.matches || []
+
+    // ── OPENAI ─────────────────────────────────────────────
+    } else if (modelo.startsWith('openai/') || modelo.includes('gpt')) {
       const model = modelo.replace('openai/', '')
-      const content: any[] = [{ type: 'text', text: prompt }]
+      const content: any[] = [{ type: 'text', text: promptTexto }]
       if (image) content.unshift({ type: 'image_url', image_url: { url: image } })
       const res = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model,
-          messages: [{ role: 'user', content }],
-          response_format: { type: 'json_object' }
-        })
+        body: JSON.stringify({ model, messages: [{ role: 'user', content }] })
       })
       const data = await res.json()
-      const parsed = JSON.parse(data.choices?.[0]?.message?.content || '{}')
+      debugInfo = { status: res.status, openai: data }
+      const text = data.choices?.[0]?.message?.content || '{}'
+      const cleaned = text.replace(/```json\n?|\n?```/g, '').trim()
+      const parsed = JSON.parse(cleaned)
       matches = parsed.matches || []
     }
 
-    // 3. Mapear IDs a productos completos
     const resultados = matches
-      .map(m => {
+      .map((m: any) => {
         const p = productos.find(p => p.id === m.id)
         if (!p) return null
         return { ...p, match_razon: m.razon }
       })
       .filter(Boolean)
 
-    return NextResponse.json({ resultados })
-  } catch (e) {
-    return NextResponse.json({ error: 'Error al procesar búsqueda' }, { status: 500 })
+    return NextResponse.json({ resultados, debug: debugInfo })
+
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message, resultados: [] }, { status: 500 })
   }
 }
