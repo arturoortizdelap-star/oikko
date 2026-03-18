@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Producto {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  descripcion String?
+  color       String?
+  tallas      String
+  piezas      Int      @default(0)
+  precio      Float
+  costo       Float    @default(0)
+  imagen      String?
+  categoria   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  pedidoItems PedidoItem[]
+}
+
+model Pedido {
+  id             Int          @id @default(autoincrement())
+  origen         String
+  proveedor      String?
+  estatus        String       @default("en_camino")
+  notas          String?
+  linkRastreo    String?
+  fechaEstimada  DateTime?
+  fecha          DateTime     @default(now())
+  items          PedidoItem[]
+}
+
+model PedidoItem {
+  id         Int      @id @default(autoincrement())
+  pedido     Pedido   @relation(fields: [pedidoId], references: [id])
+  pedidoId   Int
+  producto   Producto @relation(fields: [productoId], references: [id])
+  productoId Int
+  cantidad   Int
+  talla      String?
+}
+
+model Movimiento {
+  id       Int      @id @default(autoincrement())
+  tipo     String
+  concepto String
+  monto    Float
+  fecha    DateTime @default(now())
+}
+
+model Configuracion {
+  id    Int    @id @default(autoincrement())
+  clave String @unique
+  valor String
+}
+
+model Venta {
+  id          Int        @id @default(autoincrement())
+  cliente     String
+  telefono    String?
+  total       Float
+  fecha       DateTime   @default(now())
+  items       VentaItem[]
+}
+
+model VentaItem {
+  id         Int     @id @default(autoincrement())
+  venta      Venta   @relation(fields: [ventaId], references: [id])
+  ventaId    Int
+  productoId Int
+  nombre     String
+  precio     Float
+  cantidad   Int     @default(1)
+  talla      String?
+  imagen     String?
+}
